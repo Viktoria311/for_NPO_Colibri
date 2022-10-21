@@ -28,7 +28,6 @@ void customize(settings & s)
     std::cout << "Enter a path of output files. For example: /home/dir1/dir2" << std::endl;
     std::getline(std::cin, s.output_directory);
 
-    std::cout << " a path of output files: " << s.output_directory << std::endl;
     //d) действия при повторении имени выходного файла:  если коллизия имен ( если второй раз запуск и одинаковые имена у выходных файлов)
             //либо i) перезапись ( Если существует зачем удалять и заново создавать. Просто обнулить и записать новую инфу )
                     // перезапись итогового файла ( то есть если уже есть модифицированный файл с таким именем. то есть если по второму кругу пошел цикл)
@@ -44,7 +43,6 @@ void customize(settings & s)
 
     //f) работа по таймеру или разовый запуск. sleep()в цикле. периодичность опроса наличия входного файла (таймер)
     std::cout << "Run on a timer - 1, one-time start - 0" << std::endl;
-    //bool on_a_timer;
     std::cin >> s.on_a_timer;
 
     //e) указать период на сколько sleep. периодичность опроса наличия входного файла (таймер)
@@ -52,9 +50,11 @@ void customize(settings & s)
     {
         long int sec;
         std::cout << "Entes a quantity of min to sleep" << std::endl;
-        while(std::cin >> sec)
+        while(!(std::cin >> sec))
         {
-
+            std::cout << "Enter an integer: ";
+            std::cin.clear();
+            std::cin.ignore(100, '\n');
         }
         sec *= 60;
         s.timespan = static_cast<std::chrono::seconds>(sec);
@@ -92,43 +92,40 @@ bool is_open_by_user(const std::string & file_)
        return fs::exists(file_) && !std::fstream(file_);
 }
 
-void search_and_encode_files(const settings & s, const std::string & current_path_)
+void search_and_encode_files(const settings & s)
 {
-    for(const auto & i : fs::directory_iterator(current_path_))
+    std::cout << "current_path_ : " << s.output_directory << std::endl;
+    std::cout.flush();
+
+    for(const auto & i : fs::recursive_directory_iterator(s.output_directory))
     {
         std::cout << "name of file or directory: " << i.path().string() << std::endl;
 
-        if (fs::is_directory(i))
+        if (i.path().extension() == s.file_type) // метод extension() есть у path
         {
-            search_and_encode_files(s, i.path().string());
-        }
-        else
-        {
-            if (i.path().extension() == s.file_type) // метод extension() есть у path
+            if (is_open_by_user(i.path().string())) // если файл открыт
             {
-                if (is_open_by_user(i.path().string())) // если файл открыт
+                continue; // не трогать файл   //3) Защита от «дурака»: если входной файл не закрыт - не трогать его.
+            }
+            else // если файл не открыт
+            {
+                std::string output_file = i.path().string(); // создать строку output_file
+
+                if (fs::exists(output_file) && !s.overwriting) // 2) и если выбрали счетчик имен
                 {
-                    continue; // не трогать файл   //3) Защита от «дурака»: если входной файл не закрыт - не трогать его.
+                    modified_file_name(s, output_file);
                 }
-                else // если файл не открыт
+
+                if (fs::exists(output_file) && s.overwriting) // если в итоговой папке уже есть файл с именем И выбрали перезапись
                 {
-                    std::string output_file = i.path().string(); // создать строку output_file
-
-                    if (fs::exists(output_file) && !s.overwriting) // 2) и если выбрали счетчик имен
-                    {
-                        modified_file_name(s, output_file);
-                    }
-
-                    if (fs::exists(output_file) && s.overwriting) // если в итоговой папке уже есть файл с именем И выбрали перезапись
-                    {
-                        //обнулить содержание файла; // в классе encoder сделала флаг перезаписи
-                    }
-
-                    encoder Encoder(s.password);
-
-                 // Encoder(путь_где_взять, имя_закодированного_файла)
-                    Encoder(i.path().string(), output_file); // i.path().extension() - это тип файла
+                    //обнулить содержание файла; // в классе encoder сделала флаг перезаписи
                 }
+
+                encoder Encoder(s.password);
+
+             // Encoder(путь_где_взять, имя_закодированного_файла)
+                Encoder(i.path().string(), output_file); // i.path().extension() - это тип файла
+                std::cout << "encoder has ended" << std::endl;
             }
         }
     }
@@ -142,28 +139,28 @@ int main()
     customize(settings_); // настройка
 
 
-    if (settings_.on_a_timer) //
-    {
-        std::this_thread::sleep_for(settings_.timespan);
+    //if (settings_.on_a_timer)
+    //{
+        //std::this_thread::sleep_for(settings_.timespan);
 
-    }
-    else //
-    {
-        search_and_encode_files(settings_, settings_.output_directory);
-    }
+    //}
+    //else
+    //{
+        search_and_encode_files(settings_);
+    //}
 
     // модифицировать : есть чар - 8 байт. в цикле по 8 читать.  XOR  и результат в резуьтир файл
 
 
     ///////////////////////////////////
     // ПРИМЕР
-    fs::path root {"/"};
-    fs::path httpd { "etc/httpd/" };
-    fs::path sites {"sites-enabled"};
-    fs::path conf {"site.conf"};
+    //fs::path root {"/"};
+    //fs::path httpd { "etc/httpd/" };
+    //fs::path sites {"sites-enabled"};
+    //fs::path conf {"site.conf"};
 
-    fs::path path_to_site_conf = root / httpd / sites / conf;
-    std::cout << "path_to_site_conf: " << path_to_site_conf << std::endl;
+    //fs::path path_to_site_conf = root / httpd / sites / conf;
+    //std::cout << "path_to_site_conf: " << path_to_site_conf << std::endl;
 
 /// //////////////////////////////
 
