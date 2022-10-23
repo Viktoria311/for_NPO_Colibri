@@ -8,7 +8,7 @@ namespace fs = std::filesystem;
 
 void customize(settings & s)
 {
-    //а) указать  тип файлов -это маска
+    //а) указать  тип файлов - это маска
     std::cout << "Enter a type of files which you want to modify. For example: .txt" << std::endl;
     std::getline(std::cin, s.file_type_);
 
@@ -21,19 +21,13 @@ void customize(settings & s)
     std::cin >> s.deletion_of_input_files_;
     std::cin.get();
 
-    //c) путь к выходным файлам. куда положить результицующие С:/...
+    //c) путь к выходным файлам. куда положить результицующие
     std::cout << "Enter a path of output files. For example: /home/dir1/dir2" << std::endl;
     std::getline(std::cin, s.output_directory_);
 
     //d) действия при повторении имени выходного файла:  если коллизия имен ( если второй раз запуск и одинаковые имена у выходных файлов)
-            //либо i) перезапись ( Если существует зачем удалять и заново создавать. Просто обнулить и записать новую инфу )
-                    // перезапись итогового файла ( то есть если уже есть модифицированный файл с таким именем. то есть если по второму кругу пошел цикл)
-                    //Если файл открыть в режиме записи обычно идет пере запись данных
-            //либо ii) модификация, если да, то, например, счетчик к имени
-                    // Счетчик - если файл уже есть
-                    //  Test.txt
-                    // Со счетчиков при занятости имени новый файл берет название +1
-                    //  Test1.txt
+            // либо i) перезапись: обнулить и записать новую инфу в уже существующий файл
+            // либо ii) модификация, если да, то, например, счетчик к имени
 
     std::cout << "Actions when the output file name repeats: for overwrite output files - 1,  for apply a counter to a name - 0" << std::endl;
     std::cin >> s.overwriting_;
@@ -51,7 +45,7 @@ void customize(settings & s)
 
         while(!(std::cin >> sec))
         {
-            std::cout << "Enter an integer: ";
+            std::cout << "Try again to enter an integer: ";
             std::cin.clear();
             std::cin.ignore(100, '\n');
         }
@@ -64,10 +58,8 @@ void customize(settings & s)
         s.timespan_ = static_cast<std::chrono::seconds>(0);
     }
 
-    // g) введите число десятичное в чар: закон маску- пароль -то на что мы делаем ксор. состоит из 8 байлов. ввести 1 чар. являющий
-        // закон маска- пароль -то на что мы делаем ксор. состоит из 8 байлов. ввести 1 чар. являющий
-        // введите 1 букву или цифру латиницы в чар.
-    std::cout << "Enter char which will be a password:" << std::endl;
+    // g) введите пароль: 1 букву или цифру латиницы в чар
+    std::cout << "Enter char which will be a password: " << std::endl;
     std::cin.get(s.password_);
     std::cin.get();
 }
