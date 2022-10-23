@@ -49,15 +49,22 @@ void customize(settings & s)
     if (s.on_a_timer_)
     {
         long int sec;
+
         std::cout << "Entes a quantity of min to sleep" << std::endl;
+
         while(!(std::cin >> sec))
         {
             std::cout << "Enter an integer: ";
             std::cin.clear();
             std::cin.ignore(100, '\n');
         }
+
         sec *= 60;
         s.timespan_ = static_cast<std::chrono::seconds>(sec);
+    }
+    else
+    {
+        s.timespan_ = static_cast<std::chrono::seconds>(0);
     }
 
     // g) введите число десятичное в чар: закон маску- пароль -то на что мы делаем ксор. состоит из 8 байлов. ввести 1 чар. являющий
@@ -80,40 +87,23 @@ bool is_open_by_user(const std::string & file_)
 
 void search_and_encode_files(const settings & s)
 {
-    std::cout << "current_path_ : " << s.modify_directory_  << std::endl;
-
-    if (fs::is_directory(s.modify_directory_))
-        std::cout << "директория!: " << std::endl;
-
     for(const auto & i : fs::recursive_directory_iterator(s.modify_directory_))
     {
-        std::cout << "name of file or directory: " << i.path().string() << std::endl;
-
-        //если тип тот и если файл не открыт, не трогать файл 3) Защита от «дурака»: если входной файл не закрыт - не трогать его.
-        if (i.path().extension() == s.file_type_ && !is_open_by_user(i.path().string())) // метод extension() есть у path
+        //если тип тот и если файл открыт, не трогать файл 3) Защита от «дурака»: если входной файл не закрыт - не трогать его.
+        if (i.path().extension() == s.file_type_ && !is_open_by_user(i.path().string()))
         {
-            std::string output_file_string = i.path().stem(); // "file"
-            std::cout << "output_file_string   "  << output_file_string << std::endl;
-
-            fs::path output_dir = s.output_directory_; // "/home/dir1/dir2/dir3/dir4"
-            //fs::path output_file {output_file_string}; // "file"
+            std::string output_file_string = i.path().stem();
+            fs::path output_dir = s.output_directory_;
             fs::path file {output_file_string + s.file_type_};
             fs::path output_path = output_dir / file;
-            std::cout << "output_path: " << output_path.string() << std::endl;
 
             if (!s.overwriting_) // если выбрали счетчик имен
             {
                 for (int j = 1; fs::exists(output_path); ++j)
                 {
-                    std::cout << "output_path   "  << output_path.string() << std::endl;
-                    std::cout << "output_file_string   "  << output_file_string << std::endl;
-                    std::cout << "file "  << i.path().filename() << std::endl;
-
                     modified_file_name(output_file_string, j);
-                    std::cout << "ПОСЛЕ ИЗМЕМЕНИЯ:  J = "  << j<< "  " <<  output_file_string << std::endl;
                     fs::path new_output_file {output_file_string + s.file_type_};
                     output_path = output_dir / new_output_file;
-                    std::cout << "output_path: " << output_path.string() << std::endl;
                     output_file_string = i.path().stem();
                 }
             }
@@ -125,8 +115,7 @@ void search_and_encode_files(const settings & s)
 
             encoder Encoder(s.password_);
 
-            //Encoder(путь_где_взять, имя_закодированного_файла)
-            Encoder(i.path().string(), output_path.string()); // i.path().extension() - это тип файла
+            Encoder(i.path().string(), output_path.string());
         }
     }
 }
@@ -142,11 +131,10 @@ void set_all(settings & s)
     s.timespan_ = static_cast<std::chrono::seconds>(30*60);
     s.password_ = 'z';
 }
+
 int main()
 {
-
     settings settings_;
-
 
     //customize(settings_); // настройка
     set_all(settings_);
@@ -160,21 +148,6 @@ int main()
     //{
         search_and_encode_files(settings_);
     //}
-
-    // модифицировать : есть чар - 8 байт. в цикле по 8 читать.  XOR  и результат в резуьтир файл
-
-
-    ///////////////////////////////////
-    // ПРИМЕР
-    //fs::path root {"/"};
-    //fs::path httpd { "etc/httpd/" };
-    //fs::path sites {"sites-enabled"};
-    //fs::path conf {"site.conf"};
-
-    //fs::path path_to_site_conf = root / httpd / sites / conf;
-    //std::cout << "path_to_site_conf: " << path_to_site_conf << std::endl;
-
-/// //////////////////////////////
 
     return 0;
 }
