@@ -1,14 +1,13 @@
 #ifndef ENCODER_H
 #define ENCODER_H
 
-#include <fstream>
 #include <string>
-#include <filesystem>
+#include <chrono>
 
 struct settings
 {
     std::string file_type_; // a)
-    std::string modify_directory_; //
+    std::string modify_directory_;
     bool deletion_of_input_files_; // b)
     std::string output_directory_; // c)
     bool overwriting_; // d)
@@ -27,4 +26,4 @@ class encoder
 
 };
 
-#endif // ENCODER_H
+#endif
