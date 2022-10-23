@@ -7,14 +7,14 @@
 
 struct settings
 {
-    std::string file_type; // a)
-    std::string modify_directory; //
-    bool deletion_of_input_files; // b)
-    std::string output_directory; // c)
-    bool overwriting; // d)
-    bool on_a_timer; // f)
-    std::chrono::seconds timespan; // e)
-    char password; // g)
+    std::string file_type_; // a)
+    std::string modify_directory_; //
+    bool deletion_of_input_files_; // b)
+    std::string output_directory_; // c)
+    bool overwriting_; // d)
+    bool on_a_timer_; // f)
+    std::chrono::seconds timespan_; // e)
+    char password_; // g)
 };
 
 class encoder
