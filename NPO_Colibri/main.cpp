@@ -68,22 +68,9 @@ void customize(settings & s)
     std::cin.get();
 }
 
-void modified_file_name(const settings & s, std::string & file_name_)
+void modified_file_name(std::string & file_name_, int i)
 {
-    for (int i = 1;  ; ++i)
-    {
-        // проверка, есть ли в результирующей папке файл имяi.формат
-         if (!fs::exists(file_name_)) // if (нет файла) имя папки в которой искать, надо смотреть в s
-        {
-            std::cout << file_name_ << std::endl;
-            fs::path changed_file_name {"test"};
-
-            //меняем file_name_;
-            file_name_ = changed_file_name / s.file_type_;
-
-            break;
-        }
-    }
+    file_name_ += std::to_string(i);
 }
 
 bool is_open_by_user(const std::string & file_)
@@ -93,32 +80,45 @@ bool is_open_by_user(const std::string & file_)
 
 void search_and_encode_files(const settings & s)
 {
-    std::cout << "func void search_and_encode_files((const settings & s))" << std::endl;
-    std::cout << "current_path_ : " << s.output_directory_ << std::endl;
+    std::cout << "current_path_ : " << s.modify_directory_  << std::endl;
 
-    if (fs::is_directory(s.output_directory_))
+    if (fs::is_directory(s.modify_directory_))
         std::cout << "директория!: " << std::endl;
 
-    for (const fs::directory_entry& dir_entry :
-            fs::recursive_directory_iterator(s.output_directory_))
-    {
-        std::cout << "name of file or directory: " <<  dir_entry.path().string() << std::endl;
-    }
-    for(const auto & i : fs::recursive_directory_iterator(s.output_directory_))
+    for(const auto & i : fs::recursive_directory_iterator(s.modify_directory_))
     {
         std::cout << "name of file or directory: " << i.path().string() << std::endl;
 
         //если тип тот и если файл не открыт, не трогать файл 3) Защита от «дурака»: если входной файл не закрыт - не трогать его.
-        if (i.path().extension() == s.file_type_) // && !is_open_by_user(i.path().string())) // метод extension() есть у path
+        if (i.path().extension() == s.file_type_ && !is_open_by_user(i.path().string())) // метод extension() есть у path
         {
-            std::string output_file = i.path().string(); // создать строку output_file
+            std::string output_file_string = i.path().stem(); // "file"
+            std::cout << "output_file_string   "  << output_file_string << std::endl;
 
-            if (fs::exists(output_file) && !s.overwriting_) // 2) и если выбрали счетчик имен
+            fs::path output_dir = s.output_directory_; // "/home/dir1/dir2/dir3/dir4"
+            //fs::path output_file {output_file_string}; // "file"
+            fs::path file {output_file_string + s.file_type_};
+            fs::path output_path = output_dir / file;
+            std::cout << "output_path: " << output_path.string() << std::endl;
+
+            if (!s.overwriting_) // если выбрали счетчик имен
             {
-                modified_file_name(s, output_file);
+                for (int j = 1; fs::exists(output_path); ++j)
+                {
+                    std::cout << "output_path   "  << output_path.string() << std::endl;
+                    std::cout << "output_file_string   "  << output_file_string << std::endl;
+                    std::cout << "file "  << i.path().filename() << std::endl;
+
+                    modified_file_name(output_file_string, j);
+                    std::cout << "ПОСЛЕ ИЗМЕМЕНИЯ:  J = "  << j<< "  " <<  output_file_string << std::endl;
+                    fs::path new_output_file {output_file_string + s.file_type_};
+                    output_path = output_dir / new_output_file;
+                    std::cout << "output_path: " << output_path.string() << std::endl;
+                    output_file_string = i.path().stem();
+                }
             }
 
-            if (fs::exists(output_file) && s.overwriting_) // если в итоговой папке уже есть файл с именем И выбрали перезапись
+            if (fs::exists(output_path) && s.overwriting_) // если в итоговой папке уже есть файл с именем И выбрали перезапись
             {
                 //обнулить содержание файла; // в классе encoder сделала флаг перезаписи
             }
@@ -126,7 +126,7 @@ void search_and_encode_files(const settings & s)
             encoder Encoder(s.password_);
 
             //Encoder(путь_где_взять, имя_закодированного_файла)
-            //Encoder(i.path().string(), output_file); // i.path().extension() - это тип файла
+            Encoder(i.path().string(), output_path.string()); // i.path().extension() - это тип файла
         }
     }
 }
@@ -134,11 +134,10 @@ void search_and_encode_files(const settings & s)
 void set_all(settings & s)
 {
     s.file_type_ = ".txt";
-    s.modify_directory_ = '/';
-    //s.modify_directory_ = "/home/victoria/inp";
+    s.modify_directory_ = "/home/victoria/inp";
     s.deletion_of_input_files_ = false;
     s.output_directory_ = "/home/victoria/outp";
-    s.overwriting_ = true;
+    s.overwriting_ = false; // перезапись
     s.on_a_timer_ = false;
     s.timespan_ = static_cast<std::chrono::seconds>(30*60);
     s.password_ = 'z';
